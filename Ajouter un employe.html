@@ -1,0 +1,378 @@
+<!DOCTYPE <html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion d'Entreprise - Ajouter un Employé</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Composant Button simple
+        function Button({ children, variant = "default", className = "", onClick, type = "button", ...props }) {
+            const baseClasses = "px-4 py-2 rounded-lg font-medium transition-all cursor-pointer";
+            const variantClasses = {
+                ghost: "hover:bg-green-50 text-green-700",
+                default: "bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg"
+            };
+            const classes = `${baseClasses} ${variantClasses[variant] || variantClasses.default} ${className}`;
+            
+            return (
+                <button type={type} className={classes} onClick={onClick} {...props}>
+                    {children}
+                </button>
+            );
+        }
+
+        // Composant Card simple
+        function Card({ children, className = "", ...props }) {
+            return (
+                <div className={`bg-white rounded-lg ${className}`} {...props}>
+                    {children}
+                </div>
+            );
+        }
+
+        // Composant CardContent simple
+        function CardContent({ children, className = "", ...props }) {
+            return (
+                <div className={className} {...props}>
+                    {children}
+                </div>
+            );
+        }
+
+        // Composant Motion simplifié pour l'animation
+        function Motion({ children, initial, animate, transition, className = "", ...props }) {
+            const [style, setStyle] = useState(initial || {});
+
+            useEffect(() => {
+                const timer = setTimeout(() => {
+                    setStyle(animate || {});
+                }, transition?.delay || 0);
+
+                return () => clearTimeout(timer);
+            }, []);
+
+            return (
+                <div className={className} style={style} {...props}>
+                    {children}
+                </div>
+            );
+        }
+
+        // Page d'ajout d'un employé
+        function AddEmployeePage() {
+            const [formData, setFormData] = useState({
+                fullName: "",
+                photo: "",
+                jobTitle: "",
+                department: "",
+                email: "",
+                contact: "",
+                responsibilities: "",
+                skills: "",
+                startDate: "",
+                manager: "",
+                contractDuration: "",
+                birthDate: "",
+                birthPlace: "",
+                contractType: "",
+                adminInfo: "",
+            });
+
+            const [photoPreview, setPhotoPreview] = useState(null);
+
+            function handleChange(e) {
+                const { name, value, files } = e.target;
+
+                if (name === "photo" && files && files[0]) {
+                    const file = files[0];
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setFormData((prev) => ({
+                            ...prev,
+                            photo: reader.result,
+                        }));
+                        setPhotoPreview(reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    setFormData({
+                        ...formData,
+                        [name]: value,
+                    });
+                }
+            }
+
+            function handleSubmit(e) {
+                e.preventDefault();
+                const stored = JSON.parse(localStorage.getItem("employees") || "[]");
+                const newEmployee = {
+                    id: Date.now(),
+                    fullName: formData.fullName,
+                    photo: formData.photo,
+                    jobTitle: formData.jobTitle,
+                    department: formData.department,
+                    email: formData.email,
+                    contact: formData.contact,
+                    responsibilities: formData.responsibilities,
+                    skills: formData.skills,
+                    startDate: formData.startDate,
+                    manager: formData.manager,
+                    contractDuration: formData.contractDuration,
+                    birthDate: formData.birthDate,
+                    birthPlace: formData.birthPlace,
+                    contractType: formData.contractType,
+                    adminInfo: formData.adminInfo,
+                };
+                stored.push(newEmployee);
+                localStorage.setItem("employees", JSON.stringify(stored));
+                alert("Nouvel employé ajouté avec succès !");
+                window.location.href = "gestion.html";
+            }
+
+            return (
+                <div className="min-h-screen bg-gradient-to-b from-green-50 to-white flex flex-col items-center py-12 px-4">
+                    <Motion
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8 }}
+                        className="text-3xl font-bold text-green-800 mb-8"
+                    >
+                        <h2>Ajouter un Employé</h2>
+                    </Motion>
+
+                    <Card className="w-full max-w-4xl shadow-md border border-green-100">
+                        <CardContent className="p-6">
+                            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Nom complet */}
+                                <div>
+                                    <label className="block text-sm text-green-700 mb-1">Nom complet</label>
+                                    <input 
+                                        type="text" 
+                                        name="fullName" 
+                                        value={formData.fullName} 
+                                        onChange={handleChange} 
+                                        className="w-full px-4 py-2 rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400" 
+                                        required 
+                                    />
+                                </div>
+                                {/* Photo professionnel */}
+                                <div>
+                                    <label className="block text-sm text-green-700 mb-1">Photo professionnelle</label>
+                                    <label
+                                        htmlFor="photo-input"
+                                        className="block w-40 h-40 mx-auto border-2 border-dashed border-green-300 rounded-xl flex flex-col items-center justify-center text-center text-green-600 cursor-pointer hover:border-green-500 hover:bg-green-50 transition"
+                                    >
+                                        {photoPreview ? (
+                                            <img
+                                                src={photoPreview}
+                                                alt="Preview"
+                                                className="h-full w-full object-cover rounded-xl"
+                                            />
+                                        ) : (
+                                            <>
+                                                <span className="text-sm font-medium">Cliquez pour ajouter une photo</span>
+                                                <span className="text-xs text-green-500">Formats acceptés : PNG, JPG, JPEG</span>
+                                            </>
+                                        )}
+                                    </label>
+                                    <input
+                                        id="photo-input"
+                                        type="file"
+                                        name="photo"
+                                        onChange={handleChange}
+                                        accept="image/*"
+                                        className="hidden"
+                                    />
+                                </div>
+                                {/* Titre du poste */}
+                                <div>
+                                    <label className="block text-sm text-green-700 mb-1">Titre du poste</label>
+                                    <input 
+                                        type="text" 
+                                        name="jobTitle" 
+                                        value={formData.jobTitle} 
+                                        onChange={handleChange} 
+                                        className="w-full px-4 py-2 rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400" 
+                                        required 
+                                    />
+                                </div>
+                                {/* Département */}
+                                <div>
+                                    <label className="block text-sm text-green-700 mb-1">Département du service</label>
+                                    <input 
+                                        type="text" 
+                                        name="department" 
+                                        value={formData.department} 
+                                        onChange={handleChange} 
+                                        className="w-full px-4 py-2 rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400" 
+                                    />
+                                </div>
+                                {/* Email pro */}
+                                <div>
+                                    <label className="block text-sm text-green-700 mb-1">Email professionnel</label>
+                                    <input 
+                                        type="email" 
+                                        name="email" 
+                                        value={formData.email} 
+                                        onChange={handleChange} 
+                                        className="w-full px-4 py-2 rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400" 
+                                    />
+                                </div>
+                                {/* Contact pro */}
+                                <div>
+                                    <label className="block text-sm text-green-700 mb-1">Contact professionnel</label>
+                                    <input 
+                                        type="tel" 
+                                        name="contact" 
+                                        value={formData.contact} 
+                                        onChange={handleChange} 
+                                        className="w-full px-4 py-2 rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400" 
+                                    />
+                                </div>
+                                {/* Responsabilités principales */}
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm text-green-700 mb-1">Responsabilités principales</label>
+                                    <textarea 
+                                        name="responsibilities" 
+                                        value={formData.responsibilities} 
+                                        onChange={handleChange} 
+                                        rows="3" 
+                                        className="w-full px-4 py-2 rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400" 
+                                    />
+                                </div>
+                                {/* Compétences */}
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm text-green-700 mb-1">Compétences spécialisées</label>
+                                    <textarea 
+                                        name="skills" 
+                                        value={formData.skills} 
+                                        onChange={handleChange} 
+                                        rows="3" 
+                                        className="w-full px-4 py-2 rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400" 
+                                    />
+                                </div>
+                                {/* Date d'arrivée */}
+                                <div>
+                                    <label className="block text-sm text-green-700 mb-1">Date d'arrivée</label>
+                                    <input 
+                                        type="date" 
+                                        name="startDate" 
+                                        value={formData.startDate} 
+                                        onChange={handleChange} 
+                                        className="w-full px-4 py-2 rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400" 
+                                    />
+                                </div>
+                                {/* Manager direct */}
+                                <div>
+                                    <label className="block text-sm text-green-700 mb-1">Manager direct</label>
+                                    <input 
+                                        type="text" 
+                                        name="manager" 
+                                        value={formData.manager} 
+                                        onChange={handleChange} 
+                                        className="w-full px-4 py-2 rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400" 
+                                    />
+                                </div>
+                                {/* Durée du contrat */}
+                                <div>
+                                    <label className="block text-sm text-green-700 mb-1">Durée du contrat</label>
+                                    <input 
+                                        type="text" 
+                                        name="contractDuration" 
+                                        value={formData.contractDuration} 
+                                        onChange={handleChange} 
+                                        className="w-full px-4 py-2 rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400" 
+                                    />
+                                </div>
+                                {/* Date et lieu de naissance */}
+                                <div>
+                                    <label className="block text-sm text-green-700 mb-1">Date de naissance</label>
+                                    <input 
+                                        type="date" 
+                                        name="birthDate" 
+                                        value={formData.birthDate} 
+                                        onChange={handleChange} 
+                                        className="w-full px-4 py-2 rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400" 
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-green-700 mb-1">Lieu de naissance</label>
+                                    <input 
+                                        type="text" 
+                                        name="birthPlace" 
+                                        value={formData.birthPlace} 
+                                        onChange={handleChange} 
+                                        className="w-full px-4 py-2 rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400" 
+                                    />
+                                </div>
+                                {/* Type du contrat */}
+                                <div>
+                                    <label className="block text-sm text-green-700 mb-1">Type de contrat</label>
+                                    <select 
+                                        name="contractType" 
+                                        value={formData.contractType} 
+                                        onChange={handleChange} 
+                                        className="w-full px-4 py-2 rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400"
+                                    >
+                                        <option value="">Sélectionnez</option>
+                                        <option value="CDI">CDI</option>
+                                        <option value="CDD">CDD</option>
+                                        <option value="Stage">Stage</option>
+                                        <option value="Freelance">Freelance</option>
+                                    </select>
+                                </div>
+                                {/* Infos admin */}
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm text-green-700 mb-1">Informations administratives</label>
+                                    <textarea 
+                                        name="adminInfo" 
+                                        value={formData.adminInfo} 
+                                        onChange={handleChange} 
+                                        rows="3" 
+                                        className="w-full px-4 py-2 rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400" 
+                                    />
+                                </div>
+                                {/* Submit */}
+                                <div className="md:col-span-2 flex flex-col md:flex-row justify-between items-center gap-4 mt-6 w-full max-w-xl mx-auto">
+                                    <Button 
+                                        type="button" 
+                                        className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-xl w-full md:w-auto"
+                                        onClick={() => { window.location.href = 'home.html'; }}
+                                    >
+                                        Retour
+                                    </Button>
+                                    <Button 
+                                        type="submit" 
+                                        className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl w-full md:w-auto"
+                                    >
+                                        Enregistrer l'Employé
+                                    </Button>
+                                </div>
+                            </form>
+                        </CardContent>
+                    </Card>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<AddEmployeePage />);
+    </script>
+</body>
+</html>

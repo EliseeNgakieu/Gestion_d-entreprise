@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Effectuer les Opérations</title>
+    <style>
+        :root {
+            --primary-color: #28a745;
+            --primary-dark: #218838;
+            --light-color: #f8f9fa;
+            --white: #ffffff;
+            --border-color: #dee2e6;
+            --text-color: #212529;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--white);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        
+        .operations-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .operations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .operation-card {
+            background-color: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid var(--border-color);
+        }
+        
+        .operation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .operation-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .operation-card h3 i {
+            margin-right: 10px;
+        }
+        
+        .operation-card p {
+            margin-bottom: 15px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: var(--white);
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .btn:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .btn-outline:hover {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+        
+        .search-bar {
+            margin-bottom: 20px;
+        }
+        
+        .search-bar input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background-color: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            padding: 15px;
+            text-align: center;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .stat-card h4 {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card .value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        @media (max-width: 768px) {
+            .operations-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-overview {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="operations-container">
+        <div class="search-bar">
+            <input type="text" placeholder="Rechercher une opération...">
+        </div>
+        
+        <div class="stats-overview">
+            <div class="stat-card">
+                <h4>Employés actifs</h4>
+                <div class="value">...</div>
+            </div>
+            <div class="stat-card">
+                <h4>Contrats en cours</h4>
+                <div class="value">...</div>
+            </div>
+            <div class="stat-card">
+                <h4>Départements</h4>
+                <div class="value">...</div>
+            </div>
+            <div class="stat-card">
+                <h4>Tâches en attente</h4>
+                <div class="value">...</div>
+            </div>
+        </div>
+        
+        <div class="operations-grid">
+            <!-- Suivi des contrats -->
+            <div class="operation-card">
+                <h3><i class="fas fa-file-contract"></i> Suivi des contrats</h3>
+                <p>Gérer les contrats de travail et suivre les périodes d'essai. Recevoir des alertes de fin de période.</p>
+                <div class="action-buttons">
+                    <a href="suivi_contrat.html" class="btn">Nouveau contrat</a>
+                    <a href="suivi_contrat.html?tab=active" class="btn btn-outline">Contrats en cours</a>
+                </div>
+            </div>
+            
+            <!-- Gestion des départements -->
+            <div class="operation-card">
+                <h3><i class="fas fa-sitemap"></i> Gestion des départements</h3>
+                <p>Créer, modifier ou supprimer des départements et services. Organiser la structure de l'entreprise.</p>
+                <div class="action-buttons">
+                    <a href="gestion_departements.html" class="btn">Créer un département</a>
+                    <a href="gestion_departements.html?tab=active" class="btn btn-outline">Voir l'organigramme</a>
+                </div>
+            </div>
+            
+            <!-- Gestion des rôles -->
+            <div class="operation-card">
+                <h3><i class="fas fa-user-shield"></i> Gestion des rôles et permissions</h3>
+                <p>Définir les rôles utilisateur et attribuer des permissions d'accès aux différentes fonctionnalités.</p>
+                <div class="action-buttons">
+                    <a href="role-permission.html" class="btn">Créer un rôle</a>
+                    <a href="role-permission.html?tab=manage" class="btn btn-outline">Gérer les permissions</a>
+                </div>
+            </div>
+            
+            <!-- Suivi des tâches -->
+            <div class="operation-card">
+                <h3><i class="fas fa-tasks"></i> Suivi des tâches et responsabilités</h3>
+                <p>Assigner des tâches, suivre leur progression et gérer les responsabilités des employés.</p>
+                <div class="action-buttons">
+                    <a href="suivi_taches-responsabilites.html" class="btn">Créer une tâche</a>
+                    <a href="suivi_taches-responsabilites.html?tab=dashboard" class="btn btn-outline">Tableau de bord</a>
+                </div>
+            </div>
+            
+            <!-- Statistiques et rapports -->
+            <div class="operation-card">
+                <h3><i class="fas fa-chart-bar"></i> Statistiques et rapports internes</h3>
+                <p>Générer des rapports sur l'activité de l'entreprise. Visualiser les données sous forme de graphiques.</p>
+                <div class="action-buttons">
+                    <a href="#" class="btn">Générer un rapport</a>
+                    <a href="#" class="btn btn-outline">Voir les statistiques</a>
+                </div>
+            </div>
+            
+            <!-- Paramètres globaux -->
+            <div class="operation-card">
+                <h3><i class="fas fa-cogs"></i> Paramètres globaux de l'entreprise</h3>
+                <p>Configurer les horaires, fuseaux horaires, politiques de congés et autres paramètres généraux.</p>
+                <div class="action-buttons">
+                    <a href="#" class="btn">Modifier les paramètres</a>
+                </div>
+            </div>
+            
+            <!-- Import/Export de données -->
+            <div class="operation-card">
+                <h3><i class="fas fa-database"></i> Import/Export de données</h3>
+                <p>Importer des données depuis des fichiers externes ou exporter les données de l'entreprise.</p>
+                <div class="action-buttons">
+                    <a href="#" class="btn">Importer</a>
+                    <a href="#" class="btn btn-outline">Exporter</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

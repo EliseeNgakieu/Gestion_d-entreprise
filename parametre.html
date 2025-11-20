@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion d'Entreprise - Paramètres</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        // Composant Button simple
+        function Button({ children, variant = "default", className = "", onClick, type = "button", ...props }) {
+            const baseClasses = "px-4 py-2 rounded-lg font-medium transition-all cursor-pointer";
+            const variantClasses = {
+                ghost: "hover:bg-green-50 text-green-700",
+                default: "bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg"
+            };
+            const classes = `${baseClasses} ${variantClasses[variant] || variantClasses.default} ${className}`;
+            
+            return (
+                <button type={type} className={classes} onClick={onClick} {...props}>
+                    {children}
+                </button>
+            );
+        }
+
+        // Composant Card simple
+        function Card({ children, className = "", ...props }) {
+            return (
+                <div className={`bg-white rounded-lg ${className}`} {...props}>
+                    {children}
+                </div>
+            );
+        }
+
+        // Composant CardContent simple
+        function CardContent({ children, className = "", ...props }) {
+            return (
+                <div className={`p-6 ${className}`} {...props}>
+                    {children}
+                </div>
+            );
+        }
+
+        // Composant Input simple
+        function Input({ id, type = "text", value, onChange, className = "", ...props }) {
+            return (
+                <input
+                    id={id}
+                    type={type}
+                    value={value}
+                    onChange={onChange}
+                    className={`w-full px-4 py-2 rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400 ${className}`}
+                    {...props}
+                />
+            );
+        }
+
+        // Composant Label simple
+        function Label({ htmlFor, children, className = "", ...props }) {
+            return (
+                <label htmlFor={htmlFor} className={`block text-sm text-green-700 mb-1 ${className}`} {...props}>
+                    {children}
+                </label>
+            );
+        }
+
+        // Composant Switch simple
+        function Switch({ checked, onCheckedChange, ...props }) {
+            return (
+                <button
+                    type="button"
+                    role="switch"
+                    aria-checked={checked}
+                    onClick={() => onCheckedChange(!checked)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 ${
+                        checked ? 'bg-green-600' : 'bg-gray-300'
+                    }`}
+                    {...props}
+                >
+                    <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            checked ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                    />
+                </button>
+            );
+        }
+
+        // Composant Tabs
+        function Tabs({ defaultValue, children, ...props }) {
+            const [activeTab, setActiveTab] = useState(defaultValue || "profil");
+            
+            const childrenWithProps = React.Children.map(children, child => {
+                if (React.isValidElement(child)) {
+                    return React.cloneElement(child, { activeTab, setActiveTab });
+                }
+                return child;
+            });
+
+            return <div {...props}>{childrenWithProps}</div>;
+        }
+
+        function TabsList({ children, activeTab, setActiveTab, className = "", ...props }) {
+            const childrenWithProps = React.Children.map(children, child => {
+                if (React.isValidElement(child)) {
+                    return React.cloneElement(child, { activeTab, setActiveTab });
+                }
+                return child;
+            });
+
+            return (
+                <div className={`flex gap-2 border-b border-green-200 ${className}`} {...props}>
+                    {childrenWithProps}
+                </div>
+            );
+        }
+
+        function TabsTrigger({ value, children, activeTab, setActiveTab, className = "", ...props }) {
+            const isActive = activeTab === value;
+            return (
+                <button
+                    type="button"
+                    onClick={() => setActiveTab(value)}
+                    className={`px-4 py-2 font-medium transition-all border-b-2 ${
+                        isActive 
+                            ? 'text-green-700 border-green-600 bg-green-50' 
+                            : 'text-green-600 border-transparent hover:text-green-700 hover:bg-green-50'
+                    } ${className}`}
+                    {...props}
+                >
+                    {children}
+                </button>
+            );
+        }
+
+        function TabsContent({ value, children, activeTab, ...props }) {
+            if (activeTab !== value) return null;
+            
+            return <div {...props}>{children}</div>;
+        }
+
+        // Page des paramètres
+        function SettingsPage() {
+            const [profileData, setProfileData] = useState({ fullName: '', email: '' });
+            const [securityData, setSecurityData] = useState({ password: '', twoFA: false });
+            const [adminData, setAdminData] = useState({ maintenance: false, timezone: '', dateFormat: '' });
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-white to-green-50 p-8">
+                    <div className="max-w-5xl mx-auto">
+                        <h1 className="text-4xl font-bold text-green-700 text-center mb-6">Paramètres de l'entreprise</h1>
+                        <Tabs defaultValue="profil">
+                            <TabsList className="grid w-full grid-cols-4 bg-green-100 p-2 rounded-t-lg">
+                                <TabsTrigger value="profil" className="text-green-700">Profil utilisateur</TabsTrigger>
+                                <TabsTrigger value="securite" className="text-green-700">Compte & Sécurité</TabsTrigger>
+                                <TabsTrigger value="administratif" className="text-green-700">Administratif & Global</TabsTrigger>
+                                <TabsTrigger value="operations" className="text-green-700">Opérations Entreprise</TabsTrigger>
+                            </TabsList>
+
+                            {/* Profil Utilisateur */}
+                            <TabsContent value="profil">
+                                <Card className="mt-4 border border-green-200 shadow-sm">
+                                    <CardContent>
+                                        <h2 className="text-2xl font-semibold text-green-700 mb-4">Paramètres du Profil</h2>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <Label htmlFor="fullname">Nom complet</Label>
+                                                <Input 
+                                                    id="fullname" 
+                                                    value={profileData.fullName} 
+                                                    onChange={e => setProfileData({ ...profileData, fullName: e.target.value })} 
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="email">Email</Label>
+                                                <Input 
+                                                    id="email" 
+                                                    type="email"
+                                                    value={profileData.email} 
+                                                    onChange={e => setProfileData({ ...profileData, email: e.target.value })} 
+                                                />
+                                            </div>
+                                        </div>
+                                        <Button 
+                                            className="mt-4 bg-green-600 hover:bg-green-700 text-white"
+                                            onClick={() => alert('Profil mis à jour avec succès !')}
+                                        >
+                                            Mettre à jour le profil
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+
+                            {/* Compte & Sécurité */}
+                            <TabsContent value="securite">
+                                <Card className="mt-4 border border-green-200 shadow-sm">
+                                    <CardContent>
+                                        <h2 className="text-2xl font-semibold text-green-700 mb-4">Compte & Sécurité</h2>
+                                        <div className="flex flex-col gap-4">
+                                            <div>
+                                                <Label htmlFor="password">Changer le mot de passe</Label>
+                                                <Input 
+                                                    id="password" 
+                                                    type="password" 
+                                                    value={securityData.password} 
+                                                    onChange={e => setSecurityData({ ...securityData, password: e.target.value })} 
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-green-700">Activer l'authentification à deux facteurs</p>
+                                                <Switch 
+                                                    checked={securityData.twoFA} 
+                                                    onCheckedChange={val => setSecurityData({ ...securityData, twoFA: val })} 
+                                                />
+                                            </div>
+                                        </div>
+                                        <Button 
+                                            className="mt-4 bg-green-600 hover:bg-green-700 text-white"
+                                            onClick={() => alert('Paramètres de sécurité sauvegardés !')}
+                                        >
+                                            Sauvegarder les modifications
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+
+                            {/* Administratif & Global */}
+                            <TabsContent value="administratif">
+                                <Card className="mt-4 border border-green-200 shadow-sm">
+                                    <CardContent>
+                                        <h2 className="text-2xl font-semibold text-green-700 mb-4">Paramètres Administratifs et Globaux</h2>
+                                        <div className="grid gap-4">
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-green-700">Activer le mode maintenance</p>
+                                                <Switch 
+                                                    checked={adminData.maintenance} 
+                                                    onCheckedChange={val => setAdminData({ ...adminData, maintenance: val })} 
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="timezone">Fuseau horaire</Label>
+                                                <Input 
+                                                    id="timezone" 
+                                                    value={adminData.timezone} 
+                                                    onChange={e => setAdminData({ ...adminData, timezone: e.target.value })} 
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="date-format">Format de date</Label>
+                                                <Input 
+                                                    id="date-format" 
+                                                    value={adminData.dateFormat} 
+                                                    onChange={e => setAdminData({ ...adminData, dateFormat: e.target.value })} 
+                                                />
+                                            </div>
+                                        </div>
+                                        <Button 
+                                            className="mt-4 bg-green-600 hover:bg-green-700 text-white"
+                                            onClick={() => alert('Paramètres administratifs enregistrés !')}
+                                        >
+                                            Enregistrer les paramètres
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+
+                            {/* Opérations Entreprise */}
+                            <TabsContent value="operations">
+                                <Card className="mt-4 border border-green-200 shadow-sm">
+                                    <CardContent>
+                                        <h2 className="text-2xl font-semibold text-green-700 mb-4">Opérations Entreprise</h2>
+                                        <p className="text-green-600 mb-4">Toutes les opérations nécessaires au bon fonctionnement de l'entreprise :</p>
+                                        <ul className="list-disc list-inside text-green-700 space-y-2 mb-4">
+                                            <li>Gestion des employés (ajout, modification, suppression)</li>
+                                            <li>Suivi des contrats et périodes d'essai</li>
+                                            <li>Gestion des départements et services</li>
+                                            <li>Gestion des rôles et permissions utilisateur</li>
+                                            <li>Suivi des tâches et responsabilités</li>
+                                            <li>Statistiques et rapports internes</li>
+                                            <li>Paramètres globaux de l'entreprise (horaires, fuseaux, congés, etc.)</li>
+                                            <li>Import/Export de données</li>
+                                        </ul>
+                                        <Button 
+                                            className="mt-4 bg-green-600 hover:bg-green-700 text-white"
+                                            onClick={() => { window.location.href = "operations.html"; }}
+                                        >
+                                            Effectuer les opérations
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                        </Tabs>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<SettingsPage />);
+    </script>
+</body>
+</html>

@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Départements</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        // Composants UI de base
+        function Button({ children, variant = "default", className = "", onClick, type = "button", ...props }) {
+            const baseClasses = "px-4 py-2 rounded-lg font-medium transition-all cursor-pointer";
+            const variantClasses = {
+                ghost: "hover:bg-green-50 text-green-700",
+                default: "bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg",
+                danger: "bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg",
+                outline: "border-2 border-green-600 text-green-600 hover:bg-green-50"
+            };
+            return (
+                <button type={type} className={`${baseClasses} ${variantClasses[variant]} ${className}`} onClick={onClick} {...props}>
+                    {children}
+                </button>
+            );
+        }
+
+        function Card({ children, className = "", ...props }) {
+            return (
+                <div className={`bg-white rounded-lg shadow-md border border-green-100 ${className}`} {...props}>
+                    {children}
+                </div>
+            );
+        }
+
+        function Input({ className = "", ...props }) {
+            return (
+                <input className={`w-full px-4 py-2 rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400 ${className}`} {...props} />
+            );
+        }
+
+        function Label({ children, className = "", ...props }) {
+            return (
+                <label className={`block text-sm font-medium text-green-700 mb-1 ${className}`} {...props}>
+                    {children}
+                </label>
+            );
+        }
+
+        // Icônes SVG
+        const PlusIcon = ({ className = "w-5 h-5" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+        );
+
+        const EditIcon = ({ className = "w-5 h-5" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+        );
+
+        const DeleteIcon = ({ className = "w-5 h-5" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+        );
+
+        const SearchIcon = ({ className = "w-5 h-5" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+        );
+
+        const UsersIcon = ({ className = "w-5 h-5" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+        );
+
+        const ViewIcon = ({ className = "w-5 h-5" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+        );
+
+        // Modal Component
+        function Modal({ isOpen, onClose, title, children }) {
+            if (!isOpen) return null;
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center p-6 border-b border-green-100">
+                            <h2 className="text-2xl font-bold text-green-700">{title}</h2>
+                            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            {children}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Page principale
+        function DepartmentManagement() {
+            const [departments, setDepartments] = useState([]);
+
+            const [searchTerm, setSearchTerm] = useState("");
+            const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+            const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+            const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+            const [selectedDepartment, setSelectedDepartment] = useState(null);
+            const [formData, setFormData] = useState({
+                name: "", code: "", manager: "", employees: 0, budget: "",
+                description: "", location: "", phone: "", email: ""
+            });
+
+            const filteredDepartments = departments.filter(dept =>
+                dept.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                dept.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                dept.manager.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            const handleAdd = () => {
+                setFormData({ name: "", code: "", manager: "", employees: 0, budget: "", description: "", location: "", phone: "", email: "" });
+                setIsAddModalOpen(true);
+            };
+
+            const handleEdit = (dept) => {
+                setSelectedDepartment(dept);
+                setFormData(dept);
+                setIsEditModalOpen(true);
+            };
+
+            const handleView = (dept) => {
+                setSelectedDepartment(dept);
+                setIsViewModalOpen(true);
+            };
+
+            const handleDelete = (id) => {
+                if (confirm("Êtes-vous sûr de vouloir supprimer ce département ?")) {
+                    setDepartments(departments.filter(d => d.id !== id));
+                }
+            };
+
+            const handleSubmitAdd = (e) => {
+                e.preventDefault();
+                const newDept = { ...formData, id: Date.now() };
+                setDepartments([...departments, newDept]);
+                setIsAddModalOpen(false);
+            };
+
+            const handleSubmitEdit = (e) => {
+                e.preventDefault();
+                setDepartments(departments.map(d => d.id === selectedDepartment.id ? { ...formData, id: d.id } : d));
+                setIsEditModalOpen(false);
+            };
+
+            const totalEmployees = departments.reduce((sum, dept) => sum + dept.employees, 0);
+            const totalBudget = departments.reduce((sum, dept) => {
+                const budget = parseInt(dept.budget.replace(/[^0-9]/g, ''));
+                return sum + budget;
+            }, 0);
+
+            return (
+                <div className="min-h-screen bg-gradient-to-b from-green-50 to-white p-8">
+                    <div className="max-w-7xl mx-auto">
+                        {/* Header */}
+                        <div className="mb-8">
+                            <h1 className="text-4xl font-bold text-green-800 mb-2">Gestion des Départements</h1>
+                            <p className="text-green-600">Organisez et gérez la structure de votre entreprise</p>
+                        </div>
+
+                        {/* Statistics */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                            <Card className="p-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-green-600">Départements</p>
+                                        <p className="text-3xl font-bold text-green-700">{departments.length}</p>
+                                    </div>
+                                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                        <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </Card>
+                            <Card className="p-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-green-600">Employés Total</p>
+                                        <p className="text-3xl font-bold text-green-700">{totalEmployees}</p>
+                                    </div>
+                                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <UsersIcon className="w-6 h-6 text-blue-600" />
+                                    </div>
+                                </div>
+                            </Card>
+                            <Card className="p-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-green-600">Budget Total</p>
+                                        <p className="text-3xl font-bold text-green-700">{(totalBudget / 1000000).toFixed(1)}M€</p>
+                                    </div>
+                                    <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                                        <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </Card>
+                            <Card className="p-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-green-600">Moyenne/Dept</p>
+                                        <p className="text-3xl font-bold text-green-700">{(totalEmployees / departments.length).toFixed(1)}</p>
+                                    </div>
+                                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                                        <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </Card>
+                        </div>
+
+                        {/* Search and Actions */}
+                        <Card className="p-6 mb-6">
+                            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+                                <div className="flex-1 w-full">
+                                    <Input
+                                        type="text"
+                                        placeholder="Rechercher un département..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                </div>
+                                <Button onClick={handleAdd} className="flex items-center gap-2 whitespace-nowrap">
+                                    <PlusIcon />
+                                    Ajouter un département
+                                </Button>
+                            </div>
+                        </Card>
+
+                        {/* Departments Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {filteredDepartments.map(dept => (
+                                <Card key={dept.id} className="p-6 hover:shadow-lg transition-shadow">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div>
+                                            <h3 className="text-xl font-bold text-green-700">{dept.name}</h3>
+                                            <p className="text-sm text-green-600">Code: {dept.code}</p>
+                                        </div>
+                                        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                                            {dept.employees} employés
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="space-y-2 mb-4">
+                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            <span>Manager: {dept.manager}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <span>Budget: {dept.budget}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        <Button onClick={() => handleView(dept)} variant="outline" className="flex-1 flex items-center justify-center gap-1">
+                                            <ViewIcon className="w-4 h-4" />
+                                            Voir
+                                        </Button>
+                                        <Button onClick={() => handleEdit(dept)} variant="ghost" className="flex-1 flex items-center justify-center gap-1">
+                                            <EditIcon className="w-4 h-4" />
+                                            Modifier
+                                        </Button>
+                                        <Button onClick={() => handleDelete(dept.id)} variant="danger" className="px-3">
+                                            <DeleteIcon className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+
+                        {filteredDepartments.length === 0 && (
+                            <Card className="p-12 text-center">
+                                <p className="text-gray-500">Aucun département trouvé</p>
+                            </Card>
+                        )}
+
+                        {/* Add Modal */}
+                        <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Ajouter un département">
+                            <form onSubmit={handleSubmitAdd} className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>Nom du département *</Label>
+                                        <Input required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                                    </div>
+                                    <div>
+                                        <Label>Code *</Label>
+                                        <Input required value={formData.code} onChange={(e) => setFormData({...formData, code: e.target.value})} />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>Manager *</Label>
+                                        <Input required value={formData.manager} onChange={(e) => setFormData({...formData, manager: e.target.value})} />
+                                    </div>
+                                    <div>
+                                        <Label>Nombre d'employés *</Label>
+                                        <Input type="number" required value={formData.employees} onChange={(e) => setFormData({...formData, employees: parseInt(e.target.value)})} />
+                                    </div>
+                                </div>
+                                <div>
+                                    <Label>Budget *</Label>
+                                    <Input required value={formData.budget} onChange={(e) => setFormData({...formData, budget: e.target.value})} placeholder="Ex: 150000€" />
+                                </div>
+                                <div>
+                                    <Label>Description</Label>
+                                    <textarea className="w-full px-4 py-2 rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400" rows="3" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} />
+                                </div>
+                                <div>
+                                    <Label>Localisation</Label>
+                                    <Input value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>Téléphone</Label>
+                                        <Input type="tel" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
+                                    </div>
+                                    <div>
+                                        <Label>Email</Label>
+                                        <Input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
+                                    </div>
+                                </div>
+                                <div className="flex gap-3 pt-4">
+                                    <Button type="submit" className="flex-1">Enregistrer</Button>
+                                    <Button type="button" variant="ghost" onClick={() => setIsAddModalOpen(false)} className="flex-1">Annuler</Button>
+                                </div>
+                            </form>
+                        </Modal>
+
+                        {/* Edit Modal */}
+                        <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Modifier le département">
+                            <form onSubmit={handleSubmitEdit} className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>Nom du département *</Label>
+                                        <Input required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                                    </div>
+                                    <div>
+                                        <Label>Code *</Label>
+                                        <Input required value={formData.code} onChange={(e) => setFormData({...formData, code: e.target.value})} />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>Manager *</Label>
+                                        <Input required value={formData.manager} onChange={(e) => setFormData({...formData, manager: e.target.value})} />
+                                    </div>
+                                    <div>
+                                        <Label>Nombre d'employés *</Label>
+                                        <Input type="number" required value={formData.employees} onChange={(e) => setFormData({...formData, employees: parseInt(e.target.value)})} />
+                                    </div>
+                                </div>
+                                <div>
+                                    <Label>Budget *</Label>
+                                    <Input required value={formData.budget} onChange={(e) => setFormData({...formData, budget: e.target.value})} />
+                                </div>
+                                <div>
+                                    <Label>Description</Label>
+                                    <textarea className="w-full px-4 py-2 rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400" rows="3" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} />
+                                </div>
+                                <div>
+                                    <Label>Localisation</Label>
+                                    <Input value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>Téléphone</Label>
+                                        <Input type="tel" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
+                                    </div>
+                                    <div>
+                                        <Label>Email</Label>
+                                        <Input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
+                                    </div>
+                                </div>
+                                <div className="flex gap-3 pt-4">
+                                    <Button type="submit" className="flex-1">Mettre à jour</Button>
+                                    <Button type="button" variant="ghost" onClick={() => setIsEditModalOpen(false)} className="flex-1">Annuler</Button>
+                                </div>
+                            </form>
+                        </Modal>
+
+                        {/* View Modal */}
+                        <Modal isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)} title="Détails du département">
+                            {selectedDepartment && (
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-sm text-green-600 mb-1">Nom</p>
+                                            <p className="font-semibold text-green-800">{selectedDepartment.name}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-green-600 mb-1">Code</p>
+                                            <p className="font-semibold text-green-800">{selectedDepartment.code}</p>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-sm text-green-600 mb-1">Manager</p>
+                                            <p className="font-semibold text-green-800">{selectedDepartment.manager}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-green-600 mb-1">Employés</p>
+                                            <p className="font-semibold text-green-800">{selectedDepartment.employees}</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-green-600 mb-1">Budget</p>
+                                        <p className="font-semibold text-green-800">{selectedDepartment.budget}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-green-600 mb-1">Description</p>
+                                        <p className="text-gray-700">{selectedDepartment.description}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-green-600 mb-1">Localisation</p>
+                                        <p className="text-gray-700">{selectedDepartment.location}</p>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-sm text-green-600 mb-1">Téléphone</p>
+                                            <p className="text-gray-700">{selectedDepartment.phone}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-green-600 mb-1">Email</p>
+                                            <p className="text-gray-700">{selectedDepartment.email}</p>
+                                        </div>
+                                    </div>
+                                    <div className="pt-4">
+                                        <Button onClick={() => setIsViewModalOpen(false)} className="w-full">Fermer</Button>
+                                    </div>
+                                </div>
+                            )}
+                        </Modal>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<DepartmentManagement />);
+    </script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE <html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion d'Entreprise - Accueil</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Composant Button simple
+        function Button({ children, variant = "default", className = "", onClick, ...props }) {
+            const baseClasses = "px-4 py-2 rounded-lg font-medium transition-all";
+            const variantClasses = {
+                ghost: "hover:bg-green-50 text-green-700",
+                default: "bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg"
+            };
+            const classes = `${baseClasses} ${variantClasses[variant] || variantClasses.default} ${className}`;
+            
+            return (
+                <button className={classes} onClick={onClick} {...props}>
+                    {children}
+                </button>
+            );
+        }
+
+        // Composant Card simple
+        function Card({ children, className = "", ...props }) {
+            return (
+                <div className={`bg-white rounded-lg ${className}`} {...props}>
+                    {children}
+                </div>
+            );
+        }
+
+        // Composant CardContent simple
+        function CardContent({ children, className = "", ...props }) {
+            return (
+                <div className={className} {...props}>
+                    {children}
+                </div>
+            );
+        }
+
+        // Icônes SVG inline
+        const UsersIcon = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+        );
+
+        const PlusCircleIcon = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+
+        const SettingsIcon = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        );
+
+        // Composant Motion simplifié pour l'animation
+        function Motion({ children, initial, animate, transition, className = "", ...props }) {
+            const [style, setStyle] = useState(initial || {});
+
+            useEffect(() => {
+                const timer = setTimeout(() => {
+                    setStyle(animate || {});
+                }, transition?.delay || 0);
+
+                return () => clearTimeout(timer);
+            }, []);
+
+            return (
+                <div className={className} style={style} {...props}>
+                    {children}
+                </div>
+            );
+        }
+
+        // Page d'accueil
+        function HomePage() {
+            return (
+                <div className="min-h-screen bg-gradient-to-b from-green-50 to-white flex flex-col items-center">
+                    {/* Header */}
+                    <header className="w-full flex justify-between items-center px-8 py-4 shadow-md bg-white">
+                        <h1 className="text-2xl font-bold text-green-700">Gestion des Employés</h1>
+                        <nav className="flex gap-4">
+                            <Button variant="ghost" className="text-green-700">Accueil</Button>
+                            <Button variant="ghost" className="text-green-700">À propos</Button>
+                            <Button variant="ghost" className="text-green-700">Contact</Button>
+                        </nav>
+                    </header>
+
+                    {/* Hero Section */}
+                    <section className="mt-12 text-center">
+                        <Motion
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8 }}
+                            className="text-4xl font-bold text-green-800 mb-4"
+                        >
+                            <h2>Bienvenue dans votre espace de gestion</h2>
+                        </Motion>
+                        <p className="text-green-600 max-w-2xl mx-auto px-4">
+                            Une solution simple et efficace pour suivre et gérer vos employés en toute sérénité.
+                        </p>
+                    </section>
+
+                    {/* Feature Cards */}
+                    <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-16 px-6 max-w-5xl w-full mb-8">
+                        <Card className="shadow-md border border-green-100">
+                            <CardContent className="flex flex-col items-center p-6">
+                                <UsersIcon className="w-12 h-12 text-green-600 mb-4" />
+                                <h3 className="text-lg font-semibold text-green-700">Gestion des employés</h3>
+                                <p className="text-sm text-green-600 text-center">
+                                    Ajoutez, modifiez ou consultez les informations de votre équipe.
+                                </p>
+                                <Button
+                                    className="mt-4 w-full text-center"
+                                    onClick={() => { window.location.href = "gestion.html"; }}
+                                >
+                                    Gestion des employés
+                                </Button>
+                            </CardContent>
+                        </Card>
+                        <Card className="shadow-md border border-green-100">
+                            <CardContent className="flex flex-col items-center p-6">
+                                <PlusCircleIcon className="w-12 h-12 text-green-600 mb-4" />
+                                <h3 className="text-lg font-semibold text-green-700">Ajouter un employé</h3>
+                                <p className="text-sm text-green-600 text-center">
+                                    Créez facilement de nouveaux profils employés en quelques clics.
+                                </p>
+                                <Button
+                                    className="mt-4 w-full text-center"
+                                    onClick={() => { window.location.href = "ajouter un employe.html"; }}
+                                >
+                                    Ajouter un employé
+                                </Button>
+                            </CardContent>
+                        </Card>
+                        <Card className="shadow-md border border-green-100">
+                            <CardContent className="flex flex-col items-center p-6">
+                                <SettingsIcon className="w-12 h-12 text-green-600 mb-4" />
+                                <h3 className="text-lg font-semibold text-green-700">Paramètres</h3>
+                                <p className="text-sm text-green-600 text-center">
+                                    Personnalisez la plateforme selon les besoins de l'entreprise.
+                                </p>
+                                <Button
+                                    className="mt-4 w-full text-center"
+                                    onClick={() => { window.location.href = "parametre.html"; }}
+                                >
+                                    Paramètres
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </section>
+
+                    {/* Footer */}
+                    <footer className="mt-auto w-full bg-green-700 text-white text-center py-4">
+                        <p>&copy; 2025 Entreprise XYZ - Tous droits réservés</p>
+                    </footer>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<HomePage />);
+    </script>
+</body>
+</html>
