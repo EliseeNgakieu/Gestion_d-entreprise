@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion d'Entreprise - Paramètres Globaux</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        .logo-upload-area {
+            transition: all 0.3s ease;
+        }
+        .logo-upload-area:hover {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Composant Button
+        function Button({ children, variant = "default", className = "", onClick, type = "button", ...props }) {
+            const baseClasses = "px-4 py-2 rounded-lg font-medium transition-all cursor-pointer";
+            const variantClasses = {
+                ghost: "hover:bg-green-50 text-green-700",
+                default: "bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg",
+                outline: "border-2 border-green-600 text-green-700 hover:bg-green-50"
+            };
+            const classes = `${baseClasses} ${variantClasses[variant] || variantClasses.default} ${className}`;
+            
+            return (
+                <button type={type} className={classes} onClick={onClick} {...props}>
+                    {children}
+                </button>
+            );
+        }
+
+        // Composant Card
+        function Card({ children, className = "", ...props }) {
+            return (
+                <div className={`bg-white rounded-lg ${className}`} {...props}>
+                    {children}
+                </div>
+            );
+        }
+
+        // Composant CardContent
+        function CardContent({ children, className = "", ...props }) {
+            return (
+                <div className={`p-6 ${className}`} {...props}>
+                    {children}
+                </div>
+            );
+        }
+
+        // Composant Input
+        function Input({ id, type = "text", value, onChange, className = "", ...props }) {
+            return (
+                <input
+                    id={id}
+                    type={type}
+                    value={value}
+                    onChange={onChange}
+                    className={`w-full px-4 py-2 rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400 ${className}`}
+                    {...props}
+                />
+            );
+        }
+
+        // Composant Label
+        function Label({ htmlFor, children, className = "", ...props }) {
+            return (
+                <label htmlFor={htmlFor} className={`block text-sm text-green-700 mb-1 ${className}`} {...props}>
+                    {children}
+                </label>
+            );
+        }
+
+        // Composant Switch
+        function Switch({ checked, onCheckedChange, ...props }) {
+            return (
+                <button
+                    type="button"
+                    role="switch"
+                    aria-checked={checked}
+                    onClick={() => onCheckedChange(!checked)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 ${
+                        checked ? 'bg-green-600' : 'bg-gray-300'
+                    }`}
+                    {...props}
+                >
+                    <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            checked ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                    />
+                </button>
+            );
+        }
+
+        // Composant Select
+        function Select({ id, value, onChange, children, className = "", ...props }) {
+            return (
+                <select
+                    id={id}
+                    value={value}
+                    onChange={onChange}
+                    className={`w-full px-4 py-2 rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400 ${className}`}
+                    {...props}
+                >
+                    {children}
+                </select>
+            );
+        }
+
+        // Composant Tabs
+        function Tabs({ defaultValue, children, ...props }) {
+            const [activeTab, setActiveTab] = useState(defaultValue || "general");
+            
+            const childrenWithProps = React.Children.map(children, child => {
+                if (React.isValidElement(child)) {
+                    return React.cloneElement(child, { activeTab, setActiveTab });
+                }
+                return child;
+            });
+
+            return <div {...props}>{childrenWithProps}</div>;
+        }
+
+        function TabsList({ children, activeTab, setActiveTab, className = "", ...props }) {
+            const childrenWithProps = React.Children.map(children, child => {
+                if (React.isValidElement(child)) {
+                    return React.cloneElement(child, { activeTab, setActiveTab });
+                }
+                return child;
+            });
+
+            return (
+                <div className={`flex gap-2 border-b border-green-200 ${className}`} {...props}>
+                    {childrenWithProps}
+                </div>
+            );
+        }
+
+        function TabsTrigger({ value, children, activeTab, setActiveTab, className = "", ...props }) {
+            const isActive = activeTab === value;
+            return (
+                <button
+                    type="button"
+                    onClick={() => setActiveTab(value)}
+                    className={`px-4 py-2 font-medium transition-all border-b-2 ${
+                        isActive 
+                            ? 'text-green-700 border-green-600 bg-green-50' 
+                            : 'text-green-600 border-transparent hover:text-green-700 hover:bg-green-50'
+                    } ${className}`}
+                    {...props}
+                >
+                    {children}
+                </button>
+            );
+        }
+
+        function TabsContent({ value, children, activeTab, ...props }) {
+            if (activeTab !== value) return null;
+            
+            return <div {...props}>{children}</div>;
+        }
+
+        // Composant Logo Upload
+        function LogoUpload({ logoPreview, onLogoChange, onLogoRemove }) {
+            const fileInputRef = React.useRef(null);
+
+            const handleClick = () => {
+                fileInputRef.current?.click();
+            };
+
+            const handleFileChange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        onLogoChange(reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            return (
+                <div className="flex flex-col items-center gap-4">
+                    <div 
+                        className="logo-upload-area w-32 h-32 border-2 border-dashed border-green-300 rounded-2xl flex flex-col items-center justify-center text-center text-green-600 cursor-pointer hover:border-green-500 hover:bg-green-50 transition-all shadow-sm"
+                        onClick={handleClick}
+                    >
+                        {logoPreview ? (
+                            <img
+                                src={logoPreview}
+                                alt="Logo de l'entreprise"
+                                className="h-full w-full object-cover rounded-2xl"
+                            />
+                        ) : (
+                            <>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-2 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <span className="text-sm font-medium">Cliquez pour ajouter un logo</span>
+                                <span className="text-xs text-green-500 mt-1">PNG, JPG, JPEG</span>
+                            </>
+                        )}
+                    </div>
+                    
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                    />
+                    
+                    {logoPreview && (
+                        <Button
+                            variant="outline"
+                            className="text-xs py-1 px-3"
+                            onClick={onLogoRemove}
+                        >
+                            <span className="flex items-center gap-1">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Supprimer
+                            </span>
+                        </Button>
+                    )}
+                </div>
+            );
+        }
+
+        // Page des paramètres globaux
+        function GlobalSettingsPage() {
+            const [settings, setSettings] = useState({
+                // Informations entreprise
+                companyName: '',
+                companyLogo: '',
+                industry: '',
+                companySize: '',
+                fiscalYearStart: '',
+                
+                // Horaires et congés
+                workHoursStart: '09:00',
+                workHoursEnd: '17:00',
+                workDays: ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi'],
+                timezone: 'Europe/Paris',
+                dateFormat: 'DD/MM/YYYY',
+                timeFormat: '24h',
+                vacationDaysPerYear: 25,
+                sickLeavePolicy: 'standard',
+                
+                // Politiques RH
+                probationPeriod: 90,
+                noticePeriod: 30,
+                overtimePolicy: 'compensated',
+                remoteWorkPolicy: 'hybrid',
+                
+                // Configuration système
+                language: 'fr',
+                autoBackup: true,
+                backupFrequency: 'daily',
+                dataRetention: 365,
+                twoFactorAuth: false,
+                sessionTimeout: 60,
+                
+                // Notifications
+                emailNotifications: true,
+                taskReminders: true,
+                contractAlerts: true,
+                reportGeneration: true,
+                
+                // Intégrations
+                calendarSync: false,
+                emailIntegration: false,
+                apiAccess: false
+            });
+
+            const [loading, setLoading] = useState(true);
+            const [logoPreview, setLogoPreview] = useState(null);
+
+            useEffect(() => {
+                loadSettings();
+            }, []);
+
+            function loadSettings() {
+                try {
+                    const storedSettings = JSON.parse(localStorage.getItem("globalSettings") || "{}");
+                    setSettings(prev => ({ ...prev, ...storedSettings }));
+                    
+                    // Charger le logo si disponible
+                    if (storedSettings.companyLogo) {
+                        setLogoPreview(storedSettings.companyLogo);
+                    }
+                    
+                    setLoading(false);
+                } catch (error) {
+                    console.error("Erreur lors du chargement des paramètres :", error);
+                    setLoading(false);
+                }
+            }
+
+            function handleChange(e) {
+                const { name, value, type, checked } = e.target;
+                
+                if (type === "checkbox") {
+                    setSettings(prev => ({
+                        ...prev,
+                        [name]: checked
+                    }));
+                } else {
+                    setSettings(prev => ({
+                        ...prev,
+                        [name]: value
+                    }));
+                }
+            }
+
+            function handleLogoChange(logoData) {
+                setSettings(prev => ({
+                    ...prev,
+                    companyLogo: logoData
+                }));
+                setLogoPreview(logoData);
+            }
+
+            function handleLogoRemove() {
+                setSettings(prev => ({
+                    ...prev,
+                    companyLogo: ''
+                }));
+                setLogoPreview(null);
+            }
+
+            function handleWorkDaysChange(day) {
+                setSettings(prev => {
+                    const currentDays = [...prev.workDays];
+                    if (currentDays.includes(day)) {
+                        return {
+                            ...prev,
+                            workDays: currentDays.filter(d => d !== day)
+                        };
+                    } else {
+                        return {
+                            ...prev,
+                            workDays: [...currentDays, day]
+                        };
+                    }
+                });
+            }
+
+            function handleSave() {
+                try {
+                    localStorage.setItem("globalSettings", JSON.stringify(settings));
+                    alert("Paramètres sauvegardés avec succès !");
+                } catch (error) {
+                    console.error("Erreur lors de la sauvegarde :", error);
+                    alert("Erreur lors de la sauvegarde des paramètres.");
+                }
+            }
+
+            function handleReset() {
+                if (confirm("Êtes-vous sûr de vouloir réinitialiser tous les paramètres ?")) {
+                    localStorage.removeItem("globalSettings");
+                    setSettings({
+                        companyName: '',
+                        companyLogo: '',
+                        industry: '',
+                        companySize: '',
+                        fiscalYearStart: '',
+                        workHoursStart: '09:00',
+                        workHoursEnd: '17:00',
+                        workDays: ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi'],
+                        timezone: 'Europe/Paris',
+                        dateFormat: 'DD/MM/YYYY',
+                        timeFormat: '24h',
+                        vacationDaysPerYear: 25,
+                        sickLeavePolicy: 'standard',
+                        probationPeriod: 90,
+                        noticePeriod: 30,
+                        overtimePolicy: 'compensated',
+                        remoteWorkPolicy: 'hybrid',
+                        language: 'fr',
+                        autoBackup: true,
+                        backupFrequency: 'daily',
+                        dataRetention: 365,
+                        twoFactorAuth: false,
+                        sessionTimeout: 60,
+                        emailNotifications: true,
+                        taskReminders: true,
+                        contractAlerts: true,
+                        reportGeneration: true,
+                        calendarSync: false,
+                        emailIntegration: false,
+                        apiAccess: false
+                    });
+                    setLogoPreview(null);
+                    alert("Paramètres réinitialisés avec succès !");
+                }
+            }
+
+            if (loading) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white flex items-center justify-center">
+                        <div className="text-center">
+                            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
+                            <p className="text-green-700 font-medium">Chargement des paramètres...</p>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50 py-10 px-4">
+                    <div className="max-w-6xl mx-auto">
+                        {/* Header */}
+                        <div className="text-center mb-8">
+                            <div className="inline-flex items-center gap-2 bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                Paramètres Globaux
+                            </div>
+                            <h1 className="text-4xl font-bold text-green-800 mb-2">Configuration de l'Entreprise</h1>
+                            <p className="text-green-600">Personnalisez les paramètres généraux de votre organisation</p>
+                        </div>
+
+                        <Tabs defaultValue="general">
+                            <TabsList className="grid grid-cols-5 bg-green-100 p-2 rounded-t-lg">
+                                <TabsTrigger value="general" className="text-green-700">Général</TabsTrigger>
+                                <TabsTrigger value="schedule" className="text-green-700">Horaires & Congés</TabsTrigger>
+                                <TabsTrigger value="hr" className="text-green-700">Politiques RH</TabsTrigger>
+                                <TabsTrigger value="system" className="text-green-700">Système</TabsTrigger>
+                                <TabsTrigger value="integrations" className="text-green-700">Intégrations</TabsTrigger>
+                            </TabsList>
+
+                            {/* Section Générale */}
+                            <TabsContent value="general">
+                                <Card className="mt-4 border border-green-200 shadow-sm">
+                                    <CardContent>
+                                        <h2 className="text-2xl font-semibold text-green-700 mb-4">Informations Générales</h2>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <Label htmlFor="companyName">Nom de l'entreprise</Label>
+                                                <Input 
+                                                    id="companyName" 
+                                                    name="companyName"
+                                                    value={settings.companyName} 
+                                                    onChange={handleChange} 
+                                                    placeholder="Nom de votre entreprise"
+                                                />
+                                            </div>
+                                            
+                                            <div>
+                                                <Label htmlFor="industry">Secteur d'activité</Label>
+                                                <Input 
+                                                    id="industry" 
+                                                    name="industry"
+                                                    value={settings.industry} 
+                                                    onChange={handleChange} 
+                                                    placeholder="Ex: Technologie, Conseil, etc."
+                                                />
+                                            </div>
+                                            
+                                            <div>
+                                                <Label htmlFor="companySize">Taille de l'entreprise</Label>
+                                                <Select 
+                                                    id="companySize" 
+                                                    name="companySize"
+                                                    value={settings.companySize} 
+                                                    onChange={handleChange}
+                                                >
+                                                    <option value="">Sélectionnez</option>
+                                                    <option value="1-10">1-10 employés</option>
+                                                    <option value="11-50">11-50 employés</option>
+                                                    <option value="51-200">51-200 employés</option>
+                                                    <option value="201-500">201-500 employés</option>
+                                                    <option value="501+">501+ employés</option>
+                                                </Select>
+                                            </div>
+                                            
+                                            <div>
+                                                <Label htmlFor="fiscalYearStart">Début d'année fiscale</Label>
+                                                <Input 
+                                                    id="fiscalYearStart" 
+                                                    name="fiscalYearStart"
+                                                    type="date" 
+                                                    value={settings.fiscalYearStart} 
+                                                    onChange={handleChange} 
+                                                />
+                                            </div>
+                                            
+                                            <div className="md:col-span-2">
+                                                <Label>Logo de l'entreprise</Label>
+                                                <div className="mt-2">
+                                                    <LogoUpload 
+                                                        logoPreview={logoPreview}
+                                                        onLogoChange={handleLogoChange}
+                                                        onLogoRemove={handleLogoRemove}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+
+                            {/* Section Horaires & Congés */}
+                            <TabsContent value="schedule">
+                                <Card className="mt-4 border border-green-200 shadow-sm">
+                                    <CardContent>
+                                        <h2 className="text-2xl font-semibold text-green-700 mb-4">Horaires de Travail & Congés</h2>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <Label htmlFor="workHoursStart">Heure de début</Label>
+                                                <Input 
+                                                    id="workHoursStart" 
+                                                    name="workHoursStart"
+                                                    type="time" 
+                                                    value={settings.workHoursStart} 
+                                                    onChange={handleChange} 
+                                                />
+                                            </div>
+                                            
+                                            <div>
+                                                <Label htmlFor="workHoursEnd">Heure de fin</Label>
+                                                <Input 
+                                                    id="workHoursEnd" 
+                                                    name="workHoursEnd"
+                                                    type="time" 
+                                                    value={settings.workHoursEnd} 
+                                                    onChange={handleChange} 
+                                                />
+                                            </div>
+                                            
+                                            <div className="md:col-span-2">
+                                                <Label>Jours de travail</Label>
+                                                <div className="flex flex-wrap gap-2 mt-2">
+                                                    {['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'].map(day => (
+                                                        <button
+                                                            key={day}
+                                                            type="button"
+                                                            onClick={() => handleWorkDaysChange(day)}
+                                                            className={`px-3 py-2 rounded-lg border transition-all ${
+                                                                settings.workDays.includes(day)
+                                                                    ? 'bg-green-600 text-white border-green-600'
+                                                                    : 'bg-white text-green-700 border-green-200 hover:bg-green-50'
+                                                            }`}
+                                                        >
+                                                            {day.charAt(0).toUpperCase() + day.slice(1)}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            
+                                            <div>
+                                                <Label htmlFor="timezone">Fuseau horaire</Label>
+                                                <Select 
+                                                    id="timezone" 
+                                                    name="timezone"
+                                                    value={settings.timezone} 
+                                                    onChange={handleChange}
+                                                >
+                                                    <option value="Europe/Paris">Europe/Paris (GMT+1)</option>
+                                                    <option value="Europe/London">Europe/London (GMT+0)</option>
+                                                    <option value="America/New_York">America/New_York (GMT-5)</option>
+                                                    <option value="Asia/Tokyo">Asia/Tokyo (GMT+9)</option>
+                                                    <option value="Australia/Sydney">Australia/Sydney (GMT+10)</option>
+                                                </Select>
+                                            </div>
+                                            
+                                            <div>
+                                                <Label htmlFor="dateFormat">Format de date</Label>
+                                                <Select 
+                                                    id="dateFormat" 
+                                                    name="dateFormat"
+                                                    value={settings.dateFormat} 
+                                                    onChange={handleChange}
+                                                >
+                                                    <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                                                    <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                                                    <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                                                </Select>
+                                            </div>
+                                            
+                                            <div>
+                                                <Label htmlFor="timeFormat">Format d'heure</Label>
+                                                <Select 
+                                                    id="timeFormat" 
+                                                    name="timeFormat"
+                                                    value={settings.timeFormat} 
+                                                    onChange={handleChange}
+                                                >
+                                                    <option value="24h">24 heures</option>
+                                                    <option value="12h">12 heures (AM/PM)</option>
+                                                </Select>
+                                            </div>
+                                            
+                                            <div>
+                                                <Label htmlFor="vacationDaysPerYear">Jours de congés par an</Label>
+                                                <Input 
+                                                    id="vacationDaysPerYear" 
+                                                    name="vacationDaysPerYear"
+                                                    type="number" 
+                                                    value={settings.vacationDaysPerYear} 
+                                                    onChange={handleChange} 
+                                                    min="0"
+                                                    max="365"
+                                                />
+                                            </div>
+                                            
+                                            <div>
+                                                <Label htmlFor="sickLeavePolicy">Politique de congés maladie</Label>
+                                                <Select 
+                                                    id="sickLeavePolicy" 
+                                                    name="sickLeavePolicy"
+                                                    value={settings.sickLeavePolicy} 
+                                                    onChange={handleChange}
+                                                >
+                                                    <option value="standard">Standard</option>
+                                                    <option value="generous">Généreuse</option>
+                                                    <option value="limited">Limitée</option>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+
+                            {/* Section Politiques RH */}
+                            <TabsContent value="hr">
+                                <Card className="mt-4 border border-green-200 shadow-sm">
+                                    <CardContent>
+                                        <h2 className="text-2xl font-semibold text-green-700 mb-4">Politiques des Ressources Humaines</h2>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <Label htmlFor="probationPeriod">Période d'essai (jours)</Label>
+                                                <Input 
+                                                    id="probationPeriod" 
+                                                    name="probationPeriod"
+                                                    type="number" 
+                                                    value={settings.probationPeriod} 
+                                                    onChange={handleChange} 
+                                                    min="0"
+                                                    max="365"
+                                                />
+                                            </div>
+                                            
+                                            <div>
+                                                <Label htmlFor="noticePeriod">Préavis de départ (jours)</Label>
+                                                <Input 
+                                                    id="noticePeriod" 
+                                                    name="noticePeriod"
+                                                    type="number" 
+                                                    value={settings.noticePeriod} 
+                                                    onChange={handleChange} 
+                                                    min="0"
+                                                    max="90"
+                                                />
+                                            </div>
+                                            
+                                            <div>
+                                                <Label htmlFor="overtimePolicy">Politique d'heures supplémentaires</Label>
+                                                <Select 
+                                                    id="overtimePolicy" 
+                                                    name="overtimePolicy"
+                                                    value={settings.overtimePolicy} 
+                                                    onChange={handleChange}
+                                                >
+                                                    <option value="compensated">Rémunérées</option>
+                                                    <option value="timeOff">Récupération en temps</option>
+                                                    <option value="limited">Limitées</option>
+                                                </Select>
+                                            </div>
+                                            
+                                            <div>
+                                                <Label htmlFor="remoteWorkPolicy">Politique de télétravail</Label>
+                                                <Select 
+                                                    id="remoteWorkPolicy" 
+                                                    name="remoteWorkPolicy"
+                                                    value={settings.remoteWorkPolicy} 
+                                                    onChange={handleChange}
+                                                >
+                                                    <option value="office">Présentiel uniquement</option>
+                                                    <option value="hybrid">Hybride</option>
+                                                    <option value="fullRemote">Télétravail complet</option>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+
+                            {/* Section Système */}
+                            <TabsContent value="system">
+                                <Card className="mt-4 border border-green-200 shadow-sm">
+                                    <CardContent>
+                                        <h2 className="text-2xl font-semibold text-green-700 mb-4">Configuration du Système</h2>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <Label htmlFor="language">Langue</Label>
+                                                <Select 
+                                                    id="language" 
+                                                    name="language"
+                                                    value={settings.language} 
+                                                    onChange={handleChange}
+                                                >
+                                                    <option value="fr">Français</option>
+                                                    <option value="en">English</option>
+                                                    <option value="es">Español</option>
+                                                    <option value="de">Deutsch</option>
+                                                </Select>
+                                            </div>
+                                            
+                                            <div>
+                                                <Label htmlFor="sessionTimeout">Délai d'expiration de session (minutes)</Label>
+                                                <Input 
+                                                    id="sessionTimeout" 
+                                                    name="sessionTimeout"
+                                                    type="number" 
+                                                    value={settings.sessionTimeout} 
+                                                    onChange={handleChange} 
+                                                    min="5"
+                                                    max="480"
+                                                />
+                                            </div>
+                                            
+                                            <div className="md:col-span-2">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <div>
+                                                        <p className="text-green-700 font-medium">Sauvegarde automatique</p>
+                                                        <p className="text-green-600 text-sm">Sauvegarde régulière des données</p>
+                                                    </div>
+                                                    <Switch 
+                                                        checked={settings.autoBackup} 
+                                                        onCheckedChange={val => setSettings(prev => ({ ...prev, autoBackup: val }))} 
+                                                    />
+                                                </div>
+                                                
+                                                {settings.autoBackup && (
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                                        <div>
+                                                            <Label htmlFor="backupFrequency">Fréquence de sauvegarde</Label>
+                                                            <Select 
+                                                                id="backupFrequency" 
+                                                                name="backupFrequency"
+                                                                value={settings.backupFrequency} 
+                                                                onChange={handleChange}
+                                                            >
+                                                                <option value="daily">Quotidienne</option>
+                                                                <option value="weekly">Hebdomadaire</option>
+                                                                <option value="monthly">Mensuelle</option>
+                                                            </Select>
+                                                        </div>
+                                                        
+                                                        <div>
+                                                            <Label htmlFor="dataRetention">Rétention des données (jours)</Label>
+                                                            <Input 
+                                                                id="dataRetention" 
+                                                                name="dataRetention"
+                                                                type="number" 
+                                                                value={settings.dataRetention} 
+                                                                onChange={handleChange} 
+                                                                min="30"
+                                                                max="1095"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            
+                                            <div className="md:col-span-2">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <p className="text-green-700 font-medium">Authentification à deux facteurs</p>
+                                                        <p className="text-green-600 text-sm">Sécurité renforcée pour tous les utilisateurs</p>
+                                                    </div>
+                                                    <Switch 
+                                                        checked={settings.twoFactorAuth} 
+                                                        onCheckedChange={val => setSettings(prev => ({ ...prev, twoFactorAuth: val }))} 
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                                
+                                <Card className="mt-4 border border-green-200 shadow-sm">
+                                    <CardContent>
+                                        <h2 className="text-2xl font-semibold text-green-700 mb-4">Notifications</h2>
+                                        
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-green-700 font-medium">Notifications par email</p>
+                                                    <p className="text-green-600 text-sm">Recevoir des alertes par email</p>
+                                                </div>
+                                                <Switch 
+                                                    checked={settings.emailNotifications} 
+                                                    onCheckedChange={val => setSettings(prev => ({ ...prev, emailNotifications: val }))} 
+                                                />
+                                            </div>
+                                            
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-green-700 font-medium">Rappels de tâches</p>
+                                                    <p className="text-green-600 text-sm">Notifications pour les tâches en retard</p>
+                                                </div>
+                                                <Switch 
+                                                    checked={settings.taskReminders} 
+                                                    onCheckedChange={val => setSettings(prev => ({ ...prev, taskReminders: val }))} 
+                                                />
+                                            </div>
+                                            
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-green-700 font-medium">Alertes de contrats</p>
+                                                    <p className="text-green-600 text-sm">Notifications pour les contrats expirant</p>
+                                                </div>
+                                                <Switch 
+                                                    checked={settings.contractAlerts} 
+                                                    onCheckedChange={val => setSettings(prev => ({ ...prev, contractAlerts: val }))} 
+                                                />
+                                            </div>
+                                            
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-green-700 font-medium">Génération de rapports</p>
+                                                    <p className="text-green-600 text-sm">Rapports automatiques périodiques</p>
+                                                </div>
+                                                <Switch 
+                                                    checked={settings.reportGeneration} 
+                                                    onCheckedChange={val => setSettings(prev => ({ ...prev, reportGeneration: val }))} 
+                                                />
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+
+                            {/* Section Intégrations */}
+                            <TabsContent value="integrations">
+                                <Card className="mt-4 border border-green-200 shadow-sm">
+                                    <CardContent>
+                                        <h2 className="text-2xl font-semibold text-green-700 mb-4">Intégrations et API</h2>
+                                        
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-green-700 font-medium">Synchronisation calendrier</p>
+                                                    <p className="text-green-600 text-sm">Intégration avec Google Calendar, Outlook, etc.</p>
+                                                </div>
+                                                <Switch 
+                                                    checked={settings.calendarSync} 
+                                                    onCheckedChange={val => setSettings(prev => ({ ...prev, calendarSync: val }))} 
+                                                />
+                                            </div>
+                                            
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-green-700 font-medium">Intégration email</p>
+                                                    <p className="text-green-600 text-sm">Connexion avec Gmail, Outlook, etc.</p>
+                                                </div>
+                                                <Switch 
+                                                    checked={settings.emailIntegration} 
+                                                    onCheckedChange={val => setSettings(prev => ({ ...prev, emailIntegration: val }))} 
+                                                />
+                                            </div>
+                                            
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-green-700 font-medium">Accès API</p>
+                                                    <p className="text-green-600 text-sm">Activer l'API pour intégrations tierces</p>
+                                                </div>
+                                                <Switch 
+                                                    checked={settings.apiAccess} 
+                                                    onCheckedChange={val => setSettings(prev => ({ ...prev, apiAccess: val }))} 
+                                                />
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                        </Tabs>
+
+                        {/* Actions */}
+                        <div className="mt-6 flex justify-between">
+                            <Button 
+                                variant="outline"
+                                onClick={handleReset}
+                            >
+                                Réinitialiser
+                            </Button>
+                            <Button 
+                                onClick={handleSave}
+                            >
+                                Sauvegarder les paramètres
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<GlobalSettingsPage />);
+    </script>
+</body>
+</html>
